@@ -15,11 +15,11 @@ sky_material = SubResource("ProceduralSkyMaterial_1")
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 2
 sky = SubResource("Sky_1")
-ambient_light_source = 3
-ambient_light_energy = 0.3
-glow_enabled = true
-glow_intensity = 0.4
-sdfgi_enabled = true
+ambient_light_source = 2
+ambient_light_color = Color(0.5, 0.55, 0.6, 1)
+ambient_light_energy = 0.6
+glow_enabled = false
+sdfgi_enabled = false
 
 [node name="World" type="Node3D"]
 
@@ -36,7 +36,7 @@ directional_shadow_mode = 2
 environment = SubResource("Environment_1")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.766, 0.643, 0, -0.643, 0.766, 0, 80, 100)
+transform = Transform3D(1, 0, 0, 0, 0.781, -0.625, 0, 0.625, 0.781, 0, 80, 100)
 fov = 60.0
 near = 0.5
 far = 2000.0

@@ -68,6 +68,11 @@ func _build_mesh(img: Image) -> void:
 	mi.mesh = mesh
 	if terrain_material:
 		mi.material_override = terrain_material
+	else:
+		var mat = StandardMaterial3D.new()
+		mat.albedo_color = Color(0.45, 0.55, 0.35)
+		mat.roughness = 0.9
+		mi.material_override = mat
 
 
 func _sample(img: Image, x: int, z: int) -> float:

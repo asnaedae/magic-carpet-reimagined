@@ -89,7 +89,7 @@ func _build_mesh(img: Image) -> void:
 		mat.roughness = 0.9
 		mi.material_override = mat
 
-	print("TerrainLoader: mesh built, %d triangles" % [mesh.surface_get_array_len(0) / 3])
+	print("TerrainLoader: mesh built, %d triangles" % [mesh.surface_get_array_len(0) // 3])
 
 
 func _sample(img: Image, x: int, z: int) -> float:

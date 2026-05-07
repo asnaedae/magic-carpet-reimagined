@@ -231,7 +231,7 @@ def parse_tmaps_tab(tab_path: Path = TMAPS_TAB) -> list[dict]:
 
 def extract_texture_block(index: int,
                            dat_path: Path = TMAPS_DAT,
-                           tab_path: Path = TMAPS_TAB) -> tuple[int, int, bytes] | None:
+                           tab_path: Path = TMAPS_TAB):
     """Extract texture block `index` → (width, height, raw_pixels) or None."""
     entries = parse_tmaps_tab(tab_path)
     if index >= len(entries) or entries[index] is None:

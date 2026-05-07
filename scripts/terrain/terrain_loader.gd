@@ -1,18 +1,11 @@
 extends Node3D
 
-## Loads a level heightmap (extracted by tools/generate_heightmap.py) and
-## builds a Godot MeshInstance3D terrain from it.
-##
-## Drop a 16-bit greyscale PNG from assets/heightmaps/ onto level_heightmap_path,
-## or call load_level(n) at runtime.
-
 @export var level_index: int = 0
-@export var height_scale: float = 48.0    # world-space Y for max terrain height (196)
-@export var tile_size: float = 1.0        # horizontal spacing between height samples
+@export var height_scale: float = 48.0
+@export var tile_size: float = 1.0
 @export var terrain_material: Material
 
-const MAP_SIZE    = 256
-const ASSETS_PATH = "res://assets/heightmaps/"
+const MAP_SIZE = 256
 
 
 func _ready() -> void:
@@ -20,12 +13,34 @@ func _ready() -> void:
 
 
 func load_level(n: int) -> void:
-	var path = ASSETS_PATH + "level_%02d.png" % n
-	var img = Image.load_from_file(ProjectSettings.globalize_path(path))
-	if img == null:
-		push_error("Heightmap not found: %s  —  run tools/generate_heightmap.py --level %d" % [path, n])
+	var rel_path = "res://assets/heightmaps/level_%02d.png" % n
+	var abs_path = ProjectSettings.globalize_path(rel_path)
+	print("TerrainLoader: loading heightmap from ", abs_path)
+
+	var fa = FileAccess.open(abs_path, FileAccess.READ)
+	if fa == null:
+		push_error("TerrainLoader: file not found: " + abs_path + "  — run tools/generate_heightmap.py --level " + str(n))
+		_build_flat_mesh()
 		return
+
+	var bytes = fa.get_buffer(fa.get_length())
+	fa.close()
+
+	var img = Image.new()
+	var err = img.load_png_from_buffer(bytes)
+	if err != OK:
+		push_error("TerrainLoader: PNG decode failed (err %d): %s" % [err, abs_path])
+		_build_flat_mesh()
+		return
+
+	print("TerrainLoader: image loaded %dx%d format=%d" % [img.get_width(), img.get_height(), img.get_format()])
 	img.convert(Image.FORMAT_RF)
+	_build_mesh(img)
+
+
+func _build_flat_mesh() -> void:
+	print("TerrainLoader: building flat fallback mesh")
+	var img = Image.create(MAP_SIZE, MAP_SIZE, false, Image.FORMAT_RF)
 	_build_mesh(img)
 
 
@@ -52,7 +67,6 @@ func _build_mesh(img: Image) -> void:
 			var uv01 = Vector2(float(x)     / MAP_SIZE, float(z + 1) / MAP_SIZE)
 			var uv11 = Vector2(float(x + 1) / MAP_SIZE, float(z + 1) / MAP_SIZE)
 
-			# Two triangles per cell (CCW winding)
 			_add_tri(st, v00, uv00, v01, uv01, v10, uv10)
 			_add_tri(st, v10, uv10, v01, uv01, v11, uv11)
 
@@ -66,6 +80,7 @@ func _build_mesh(img: Image) -> void:
 		add_child(mi)
 
 	mi.mesh = mesh
+
 	if terrain_material:
 		mi.material_override = terrain_material
 	else:
@@ -74,11 +89,12 @@ func _build_mesh(img: Image) -> void:
 		mat.roughness = 0.9
 		mi.material_override = mat
 
+	print("TerrainLoader: mesh built, %d triangles" % [mesh.surface_get_array_len(0) / 3])
+
 
 func _sample(img: Image, x: int, z: int) -> float:
 	x = clamp(x, 0, MAP_SIZE - 1)
 	z = clamp(z, 0, MAP_SIZE - 1)
-	# 16-bit PNG loaded as FORMAT_RF: pixel value is 0.0–1.0 mapping 0–65535
 	return img.get_pixel(x, z).r * height_scale
 
 

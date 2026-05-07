@@ -33,15 +33,15 @@ MAP_SIZE     = 256
 MAX_HEIGHT   = 196   # engine height cap; maps to white in PGM
 
 
-def pgm_to_png16(pgm_bytes: bytes) -> Image.Image:
-    """Convert a P5 PGM to a 16-bit grayscale PIL image, scaling 0..196 → 0..65535."""
+def pgm_to_png8(pgm_bytes: bytes) -> Image.Image:
+    """Convert a P5 PGM to an 8-bit grayscale PNG, scaling 0..maxval → 0..255."""
     lines = pgm_bytes.split(b"\n", 3)
     assert lines[0] == b"P5"
     w, h = map(int, lines[1].split())
     maxval = int(lines[2])
     raw = lines[3][: w * h]
-    arr = (np.frombuffer(raw, dtype=np.uint8).astype(np.uint16) * 65535 // maxval)
-    return Image.fromarray(arr.reshape(h, w), mode="I;16")
+    arr = (np.frombuffer(raw, dtype=np.uint8).astype(np.uint16) * 255 // maxval).astype(np.uint8)
+    return Image.fromarray(arr.reshape(h, w), mode="L")
 
 
 def generate_one(level_num: int, stages: int = 17) -> Path:
@@ -70,7 +70,7 @@ def generate_one(level_num: int, stages: int = 17) -> Path:
     pgm_bytes = Path(pgm_path).read_bytes()
     Path(pgm_path).unlink(missing_ok=True)
 
-    img = pgm_to_png16(pgm_bytes)
+    img = pgm_to_png8(pgm_bytes)
     img.save(out_png)
     return out_png
 
@@ -96,7 +96,7 @@ def main():
         print(f"Level {n:02d}...", end=" ", flush=True)
         out = generate_one(n, args.stages)
         if out:
-            print(f"→ {out.name} ({MAP_SIZE}×{MAP_SIZE} 16-bit PNG)")
+            print(f"→ {out.name} ({MAP_SIZE}×{MAP_SIZE} 8-bit grayscale PNG)")
         else:
             print("FAILED")
 

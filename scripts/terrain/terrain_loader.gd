@@ -21,13 +21,11 @@ func _ready() -> void:
 
 func load_level(n: int) -> void:
 	var path = ASSETS_PATH + "level_%02d.png" % n
-	var tex = load(path) as Texture2D
-	if tex == null:
+	var img = Image.load_from_file(ProjectSettings.globalize_path(path))
+	if img == null:
 		push_error("Heightmap not found: %s  —  run tools/generate_heightmap.py --level %d" % [path, n])
 		return
-	var img = tex.get_image()
-	img.convert(Image.FORMAT_RF)   # float for easy sampling
-
+	img.convert(Image.FORMAT_RF)
 	_build_mesh(img)
 
 

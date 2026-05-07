@@ -18,9 +18,10 @@ import tempfile
 from pathlib import Path
 
 try:
+    import numpy as np
     from PIL import Image
 except ImportError:
-    sys.exit("pip install Pillow")
+    sys.exit("pip install Pillow numpy")
 
 from common import (
     extract_level_bytes, parse_gen_map,
@@ -38,11 +39,9 @@ def pgm_to_png16(pgm_bytes: bytes) -> Image.Image:
     assert lines[0] == b"P5"
     w, h = map(int, lines[1].split())
     maxval = int(lines[2])
-    raw = lines[3]
-    pixels = [int(b) * 65535 // maxval for b in raw[: w * h]]
-    img = Image.new("I", (w, h))
-    img.putdata(pixels)
-    return img.convert("I;16")
+    raw = lines[3][: w * h]
+    arr = (np.frombuffer(raw, dtype=np.uint8).astype(np.uint16) * 65535 // maxval)
+    return Image.fromarray(arr.reshape(h, w), mode="I;16")
 
 
 def generate_one(level_num: int, stages: int = 17) -> Path:
